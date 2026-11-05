@@ -2,7 +2,7 @@ import os
 import sys
 from datetime import datetime
 from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QDesktopServices
+from PySide6.QtGui import QAction, QDesktopServices, QIcon, QKeySequence
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QLineEdit, QPushButton, QFileDialog, QSpinBox, QRadioButton,
@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
 
 from core.organizer import ScanResult
 from ui.worker import ScanWorker, OrganizeWorker
-from ui.style import MODERN_DARK_STYLESHEET
+from ui.style import get_stylesheet
 
 
 class MainWindow(QMainWindow):
@@ -24,12 +24,42 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(1020, 700)
         self.setAcceptDrops(True)
 
+        self.current_theme = "dark"
         self.scan_result: ScanResult = None
         self.scan_worker: ScanWorker = None
         self.organize_worker: OrganizeWorker = None
 
+        # 아이콘 설정
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "icon.ico")
+        if os.path.isfile(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
+
         self._setup_ui()
-        self.setStyleSheet(MODERN_DARK_STYLESHEET)
+        self.setStyleSheet(get_stylesheet("dark"))
+
+        # 테마 전환 단축키 (F6)
+        toggle_action = QAction("테마 전환", self)
+        toggle_action.setShortcut(QKeySequence("F6"))
+        toggle_action.triggered.connect(self.toggle_theme)
+        self.addAction(toggle_action)
+
+    def toggle_theme(self):
+        from PySide6.QtWidgets import QApplication
+        self.current_theme = "light" if self.current_theme == "dark" else "dark"
+        new_style = get_stylesheet(self.current_theme)
+
+        # MainWindow 인스턴스와 QApplication 전체에 스타일시트 동시 적용
+        self.setStyleSheet(new_style)
+        app = QApplication.instance()
+        if app:
+            app.setStyleSheet(new_style)
+
+        if self.current_theme == "dark":
+            self.theme_btn.setText("🌙 Dark")
+            self.theme_btn.setToolTip("Light 모드로 전환 (F6)")
+        else:
+            self.theme_btn.setText("☀️ Light")
+            self.theme_btn.setToolTip("Dark 모드로 전환 (F6)")
 
     def _setup_ui(self):
         central_widget = QWidget()
@@ -39,16 +69,28 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.setSpacing(14)
 
-        # 1. Header
-        header_layout = QVBoxLayout()
-        header_layout.setSpacing(4)
+        # 1. Header (제목 + 설명 + 우측 테마 토글 버튼)
+        header_row = QHBoxLayout()
+        header_row.setSpacing(10)
+
+        header_text_layout = QVBoxLayout()
+        header_text_layout.setSpacing(4)
         title_label = QLabel("PhotoClustering")
         title_label.setObjectName("TitleLabel")
         subtitle_label = QLabel("사진 메타데이터(EXIF) 및 파일명 날짜를 분석하여 10장 이상의 날짜별 폴더를 자동 생성·정리합니다.")
         subtitle_label.setObjectName("SubtitleLabel")
-        header_layout.addWidget(title_label)
-        header_layout.addWidget(subtitle_label)
-        main_layout.addLayout(header_layout)
+        header_text_layout.addWidget(title_label)
+        header_text_layout.addWidget(subtitle_label)
+        header_row.addLayout(header_text_layout, 1)
+
+        self.theme_btn = QPushButton("🌙 Dark")
+        self.theme_btn.setObjectName("SecondarySmallBtn")
+        self.theme_btn.setToolTip("Light 모드로 전환 (F6)")
+        self.theme_btn.setMinimumHeight(32)
+        self.theme_btn.clicked.connect(self.toggle_theme)
+        header_row.addWidget(self.theme_btn, 0, Qt.AlignmentFlag.AlignTop)
+
+        main_layout.addLayout(header_row)
 
         # 2. Folder Select Card
         folder_card = QFrame()

@@ -41,7 +41,7 @@ echo.
 echo [3/3] Packaging single standalone EXE (--onefile)...
 echo       This usually takes about 1-2 minutes. Please wait...
 "%PY%" -m PyInstaller --noconfirm --clean --onefile --windowed ^
-    --name "%NAME%" ^
+    --name "%NAME%" --icon="icon.ico" --add-data "icon.ico;." ^
     --distpath dist --workpath build --specpath build ^
     main.py
 
