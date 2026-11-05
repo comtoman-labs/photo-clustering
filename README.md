@@ -4,6 +4,14 @@
 
 ---
 
+## 🖥️ 프로그램 실행 화면
+
+<p align="center">
+  <img src="doc/screenshot.png" alt="PhotoClustering 실행 화면" width="100%">
+</p>
+
+---
+
 ## 🌟 주요 기능
 
 1. **🔍 3단계 정밀 날짜 추출 엔진 (`core/date_extractor.py`)**
